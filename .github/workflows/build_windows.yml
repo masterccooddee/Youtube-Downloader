@@ -1,0 +1,37 @@
+name: Build Windows EXE
+
+on:
+  workflow_dispatch:      # 允許手動觸發
+  push:
+    branches: [ "main" ]  # 當 main 分支有更新（包含自動更新的 commit）時觸發
+    paths-ignore:         # (選用) 忽略純文件修改，避免不必要的打包
+      - 'README.md'
+      - '.gitignore'
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
+          python-version: "3.13"
+
+      - name: Install dependencies
+        # 使用 sync 確保安裝的是 uv.lock 中紀錄的確切版本 (包含剛更新的 yt-dlp)
+        run: uv sync
+
+      - name: Build with flet pack
+        run: flet pack main.py --name "YouTube下載器" --add-data "assets;assets" --icon "assets/ytdownload.ico"
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: YouTube-Downloader-Windows
+          path: dist/YouTube下載器.exe
+          if-no-files-found: error
