@@ -39,16 +39,16 @@ jobs:
             # --------------- 下面只有在需要更新時才會執行 ---------------
 
             - name: Install uv
-              if: env.UPDATE_NEEDED == 'false'
+              if: env.UPDATE_NEEDED == 'true'
               uses: astral-sh/setup-uv@v7
 
             - name: Update uv.lock
-              if: env.UPDATE_NEEDED == 'false'
+              if: env.UPDATE_NEEDED == 'true'
               # 只更新 yt-dlp，不影響其他套件
               run: uv lock --upgrade-package yt-dlp[default]
 
             - name: Commit and Push
-              if: env.UPDATE_NEEDED == 'false'
+              if: env.UPDATE_NEEDED == 'true'
               run: |
                 git config --global user.name "github-actions[bot]"
                 git config --global user.email "github-actions[bot]@users.noreply.github.com"
