@@ -1,0 +1,59 @@
+name: Check Update
+on:
+  schedule:
+    - cron: '0 0,12 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+    check_version:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v6
+            
+            - name: Check Versions (No uv required)
+              id: check
+              run: |
+                    # 1. 從 PyPI API 取得最新版本
+                    LATEST=$(curl -s https://pypi.org/pypi/yt-dlp/json | jq -r .info.version)
+                    echo "Latest version: $LATEST"
+                    
+                    # 2. 從 uv.lock 檔案中讀取目前版本 (使用 grep/sed 提取，不需 uv)
+                    # 邏輯: 找到 name = "yt-dlp" 的下一行通常是 version
+                    CURRENT=$(grep -A 2 'name = "yt-dlp"' uv.lock | grep 'version' | head -n 1 | cut -d '"' -f 2)
+                    echo "Current lock version: $CURRENT"
+                    
+                    # 3. 比對兩者
+                    if [ "$LATEST" != "$CURRENT" ]; then
+                        echo "版本不同，需要更新！"
+                        echo "UPDATE_NEEDED=true" >> $GITHUB_ENV
+                        echo "LATEST_VERSION=$LATEST" >> $GITHUB_ENV
+                    else
+                        echo "版本相同，無需動作。"
+                        echo "UPDATE_NEEDED=false" >> $GITHUB_ENV
+                    fi
+            
+            # --------------- 下面只有在需要更新時才會執行 ---------------
+
+            - name: Install uv
+              if: env.UPDATE_NEEDED == 'true'
+              uses: astral-sh/setup-uv@v7
+
+            - name: Update uv.lock
+              if: env.UPDATE_NEEDED == 'true'
+              # 只更新 yt-dlp，不影響其他套件
+              run: uv lock --upgrade-package yt-dlp[default]
+
+            - name: Commit and Push
+              if: env.UPDATE_NEEDED == 'true'
+              run: |
+                git config --global user.name "github-actions[bot]"
+                git config --global user.email "github-actions[bot]@users.noreply.github.com"
+                
+                git add uv.lock
+                git commit -m "Auto-update yt-dlp to ${{ env.LATEST_VERSION }}"
+                echo "Pushing changes..."
+                git push
