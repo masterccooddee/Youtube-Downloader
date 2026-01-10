@@ -2,7 +2,7 @@ name: Auto Update yt-dlp & Build Windows EXE
 
 on:
   schedule:
-    - cron: '0 0,12 * * *'  # 每週日 UTC 時間 00:00, 12:00 自動觸發
+    - cron: '0 0,12 * * *'  # 每日 UTC 時間 00:00, 12:00 自動觸發
   workflow_dispatch:      # 允許手動觸發
 
 permissions:
