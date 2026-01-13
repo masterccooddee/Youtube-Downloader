@@ -11,3 +11,6 @@ wheels/
 
 # flet pack
 *.spec
+
+*.exe
+test.py

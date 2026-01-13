@@ -7,6 +7,7 @@ from windows_ProgressBar import WindowsTaskbar
 import shutil
 import sys
 import ctypes
+from _version import VERSION
 
 DEBUG_MODE = False
 
@@ -15,30 +16,31 @@ def debug_print(*args, **kwargs):
     if DEBUG_MODE:
         print("[DEBUG]:", *args, **kwargs)
 
-def toggle_console(e):
-    kernel32 = ctypes.WinDLL('kernel32')
-    user32 = ctypes.WinDLL('user32')
-    hWnd = kernel32.GetConsoleWindow()
-    global DEBUG_MODE
-    if hWnd == 0:
-        # 如果完全沒有 Console (例如打包成 no-console exe 時)，就配置一個新的
-        DEBUG_MODE = True
-        kernel32.AllocConsole()
-        # 重新導向 print 到這個新視窗
-        sys.stdout = open('CONOUT$', 'w', encoding='utf-8')
-        sys.stderr = open('CONOUT$', 'w', encoding='utf-8')
-        print("--- Debug Console Enabled ---")
-    else:
-        # 如果已經有 Console，就切換顯示/隱藏
-        if user32.IsWindowVisible(hWnd):
-            user32.ShowWindow(hWnd, 0) # 0 = SW_HIDE (隱藏)
-            DEBUG_MODE = False
-        else:
-            user32.ShowWindow(hWnd, 5) # 5 = SW_SHOW (顯示)
-            DEBUG_MODE = True
+# def toggle_console(e):
+#     kernel32 = ctypes.WinDLL('kernel32')
+#     user32 = ctypes.WinDLL('user32')
+#     hWnd = kernel32.GetConsoleWindow()
+#     global DEBUG_MODE
+#     if hWnd == 0:
+#         # 如果完全沒有 Console (例如打包成 no-console exe 時)，就配置一個新的
+#         DEBUG_MODE = True
+#         kernel32.AllocConsole()
+#         # 重新導向 print 到這個新視窗
+#         sys.stdout = open('CONOUT$', 'w', encoding='utf-8')
+#         sys.stderr = open('CONOUT$', 'w', encoding='utf-8')
+#         print("--- Debug Console Enabled ---")
+#     else:
+#         # 如果已經有 Console，就切換顯示/隱藏
+#         if user32.IsWindowVisible(hWnd):
+#             user32.ShowWindow(hWnd, 0) # 0 = SW_HIDE (隱藏)
+#             DEBUG_MODE = False
+#         else:
+#             user32.ShowWindow(hWnd, 5) # 5 = SW_SHOW (顯示)
+#             DEBUG_MODE = True
 
 def main(page: ft.Page):
-    page.title = "YouTube 下載器"
+    
+    page.title = f"YouTube 下載器 [{VERSION}]"
     page.theme_mode = ft.ThemeMode.LIGHT
     last_fetched_url = ""
     page.window.width = 900
@@ -768,19 +770,19 @@ def main(page: ft.Page):
     )
 
     # debug console
-    debug_col = ft.Column(
-        controls=[
-            ft.Container(
-                content=ft.Text("切換 除錯主控台 (Console)"),
-                bgcolor=ft.Colors.WHITE,
-                on_click=toggle_console,
-                margin=ft.Margin.only(left=10, top=0)
-            )
-        ],
-        width=page.window.width,
-        alignment=ft.MainAxisAlignment.START,
-        horizontal_alignment=ft.CrossAxisAlignment.START,
-    )
+    # debug_col = ft.Column(
+    #     controls=[
+    #         ft.Container(
+    #             content=ft.Text("切換 除錯主控台 (Console)"),
+    #             bgcolor=ft.Colors.WHITE,
+    #             on_click=toggle_console,
+    #             margin=ft.Margin.only(left=10, top=0)
+    #         )
+    #     ],
+    #     width=page.window.width,
+    #     alignment=ft.MainAxisAlignment.START,
+    #     horizontal_alignment=ft.CrossAxisAlignment.START,
+    # )
 
     # ///////////////////////
     # 功能實作區域
