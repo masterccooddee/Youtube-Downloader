@@ -38,6 +38,8 @@ jobs:
 
                         echo "LATEST_VERSION=$LATEST" >> $GITHUB_OUTPUT
                         echo "LATEST_VERSION=$LATEST" >> $GITHUB_ENV
+                        # 更新 _version.py 檔案
+                        echo "VERSION = \"v$LATEST\"" > _version.py
                     else
                         echo "版本相同，無需動作。"
                         echo "UPDATE_NEEDED=false" >> $GITHUB_OUTPUT
@@ -57,7 +59,7 @@ jobs:
                 git config --global user.name "github-actions[bot]"
                 git config --global user.email "github-actions[bot]@users.noreply.github.com"
                 
-                git add uv.lock
+                git add uv.lock _version.py
                 git commit -m "Auto-update yt-dlp to ${{ env.LATEST_VERSION }}"
                 echo "Pushing changes..."
                 git push

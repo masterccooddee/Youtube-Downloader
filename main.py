@@ -8,13 +8,9 @@ import shutil
 import sys
 import ctypes
 from _version import VERSION
+from version_update import VersionUpdate
+from debug import debug_print
 
-DEBUG_MODE = False
-
-def debug_print(*args, **kwargs):
-    """除錯用印出函式"""
-    if DEBUG_MODE:
-        print("[DEBUG]:", *args, **kwargs)
 
 # def toggle_console(e):
 #     kernel32 = ctypes.WinDLL('kernel32')
@@ -53,6 +49,145 @@ def main(page: ft.Page):
     page.theme = ft.Theme(font_family="SourceHan")
     page.scroll = ft.ScrollMode.AUTO
 
+    # check updates
+    updater = VersionUpdate()
+
+    update_container = ft.Container(content=ft.Text("是否要下載並安裝最新版本？"))
+    downloading_text = ft.Text()
+    downloading_progress = ft.ProgressBar(width=400, height=5, value=0.0)
+    current_update_progress = 0.0
+    current_update_state = "IDLE"
+
+
+    async def update_clicked(e):
+        update_dialog.actions.clear()
+        update_dialog.update()
+
+        update_container.content = ft.Column([
+            downloading_text,
+            downloading_progress
+        ], tight=True, horizontal_alignment=ft.CrossAxisAlignment.CENTER) # 使用 Column 包起來比較整齊
+        page.update()
+        asyncio.create_task(update_monitor())
+        await updater.apply_update(callback=update_callback)
+
+    async def update_monitor():
+        """專門負責更新 UI 的異步迴圈"""
+        FINISHED_STATES = ["ERROR", "VERIFYING_FAILED", "VERIFYING_SUCCESS"]
+        while updater.need_update and current_update_state not in FINISHED_STATES:
+            downloading_progress.value = current_update_progress
+            match current_update_state:
+                case "IDLE":
+                    downloading_text.value = "準備下載最新版本..."
+                case "DOWNLOADING":
+                    downloading_text.value = f"下載中... {current_update_progress*100:.2f}%"
+                case "VERIFYING":
+                    downloading_text.value = f"驗證下載檔案中... {current_update_progress*100:.2f}%"
+            downloading_progress.update()  # 單獨更新進度條
+            downloading_text.update()  # 單獨更新文字
+            await asyncio.sleep(0.1)  # 每 0.1 秒刷新一次 UI，避免卡死
+        if current_update_state == "VERIFYING_SUCCESS":
+            downloading_text.value = "更新完成，將重新啟動程式。"
+            downloading_progress.value = 1.0
+        elif current_update_state == "VERIFYING_FAILED":
+            downloading_text.value = "更新失敗，請稍後再試。"
+            downloading_progress.value = 0.0
+        elif current_update_state == "ERROR":
+            downloading_text.value = "更新過程中發生錯誤，請稍後再試。"
+            downloading_progress.value = 0.0
+        downloading_progress.update()
+        downloading_text.update()
+
+    def update_callback(progress, state):
+        nonlocal current_update_progress, current_update_state
+        current_update_progress = progress
+        current_update_state = state
+
+    current_ver_display = ft.Column(
+        [
+            ft.Text("目前版本", size=12, color=ft.Colors.GREY),
+            ft.Container(
+                content=ft.Text(VERSION, weight=ft.FontWeight.BOLD),
+                padding=5,
+                bgcolor="#E3E2E2",
+                border_radius=5,
+            ),
+        ],
+        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+    )
+
+    new_ver_display = ft.Column(
+        [
+            ft.Text("最新版本", size=12, color=ft.Colors.GREEN),
+            ft.Container(
+                content=ft.Text(
+                    updater.info.get('tag_name', '未知'), 
+                    weight=ft.FontWeight.BOLD, 
+                    color=ft.Colors.WHITE
+                ),
+                padding=5,
+                bgcolor=ft.Colors.GREEN, # 用綠色強調新版
+                border_radius=5,
+            ),
+        ],
+        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+    )
+
+    update_dialog = ft.AlertDialog(
+        modal=True,
+        title=ft.Container(
+            content=ft.Row(
+                [
+                    ft.Icon(ft.Icons.ROCKET_LAUNCH_ROUNDED, color=ft.Colors.BLUE, size=28),
+                    ft.Text("發現新版本！", size=20, weight=ft.FontWeight.BOLD),
+                ],
+                alignment=ft.MainAxisAlignment.CENTER, # 標題置中
+            ),
+            padding=ft.Padding.only(bottom=10) # 標題和下方內容的間距
+        ),
+        content=ft.Container(
+            
+            padding=ft.Padding.symmetric(vertical=10), # 增加上下內距
+            content=ft.Column(
+                [
+                    # 版本對比區域
+                    ft.Container(
+                        content=ft.Row(
+                            [
+                                current_ver_display,
+                                ft.Icon(ft.Icons.ARROW_FORWARD_ROUNDED, color=ft.Colors.GREY_400, size=20),
+                                new_ver_display,
+                            ],
+                            alignment=ft.MainAxisAlignment.CENTER,
+                            vertical_alignment=ft.CrossAxisAlignment.CENTER, # [修改] 讓箭頭垂直置中對齊版本號
+                            spacing=20,
+                        ),
+                        bgcolor=ft.Colors.GREY_50, # 加個極淡的背景色框住版本區
+                        padding=15,
+                        border_radius=10,
+                    ),
+                    
+                    ft.Divider(height=30, color=ft.Colors.TRANSPARENT), # [修改] 使用透明間距代替實線
+                    
+                    # 下載進度或詢問文字區域
+                    update_container, 
+                ],
+                tight=True,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            ),
+        ),
+        actions=[
+            ft.TextButton("稍後再說", on_click=lambda e: page.pop_dialog()),
+            ft.TextButton("下載並安裝", on_click=update_clicked),
+            ],
+        alignment=ft.Alignment.CENTER,
+        actions_alignment=ft.MainAxisAlignment.CENTER
+    )
+    
+    if updater.need_update:
+        page.show_dialog(update_dialog)
+        
+    # check dependencies
     missing_tools = []
 
     def check_dependencies():
