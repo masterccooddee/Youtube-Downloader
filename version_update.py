@@ -74,7 +74,7 @@ class VersionUpdate:
             if sha256_checksum:
                 state = "VERIFYING"
                 if callback:
-                    callback(1.0, state)
+                    callback(0.0, state)
                 sha256 = hashlib.sha256()
 
                 filesize = os.path.getsize(update_filename)

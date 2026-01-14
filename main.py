@@ -826,6 +826,7 @@ def main(page: ft.Page):
             await asyncio.sleep(0.1)  # 每 0.1 秒刷新一次 UI，避免卡死
 
     async def download_button_clicked(e):
+        nonlocal current_progress, current_progress_text
         if not current_video_info:
             url_input.error = "請先輸入有效的 YouTube 連結"
             url_input.update()
@@ -838,8 +839,11 @@ def main(page: ft.Page):
             return
 
         progress_bar.value = 0.0
+        current_progress = 0.0
         taskbar_progress.reset_progress()
         progress_text.value = "準備下載..."
+        current_progress_text = "準備下載..."
+
         download_status = "idle"
         url = url_input.value.strip()
         output_path = output_filename
