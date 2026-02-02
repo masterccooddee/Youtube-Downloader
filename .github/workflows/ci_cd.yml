@@ -87,13 +87,13 @@ jobs:
               env:
                     PYTHONIOENCODING: utf-8
                     PYTHONUTF8: 1
-              run: uv run flet pack main.py --name "YouTube下載器" --add-data "assets;assets" --icon "assets/ytdownload.ico"
+              run: uv run flet pack main.py --name "YouTube_Downloader" --add-data "assets;assets" --icon "assets/ytdownload.ico"
 
             - name: Upload Artifact
               uses: actions/upload-artifact@v4
               with:
                 name: YouTube-Downloader-Windows
-                path: dist/YouTube下載器.exe
+                path: dist/YouTube_Downloader.exe
                 if-no-files-found: error
             
             - name: Create Release
@@ -102,4 +102,4 @@ jobs:
                 tag_name: v${{ needs.check_version.outputs.target_version }}
                 name: Release v${{ needs.check_version.outputs.target_version }}
                 body: "自動更新 yt-dlp 至版本 ${{ needs.check_version.outputs.target_version }} 並建置 Windows 可執行檔。"
-                files: dist/YouTube下載器.exe
+                files: dist/YouTube_Downloader.exe
