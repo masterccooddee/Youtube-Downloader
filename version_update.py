@@ -6,6 +6,7 @@ import sys
 import asyncio
 from debug import debug_print
 import textwrap
+import datetime
 
 class VersionUpdate:
     def __init__(self):
@@ -44,7 +45,12 @@ class VersionUpdate:
         
     def check_for_update(self):
         latest_version = self.info.get('tag_name', self.now_version)
-        self.need_update = (latest_version != self.now_version)
+        latest_version = latest_version.lstrip('v')  # 移除前綴的 'v'，如果有的話
+        y, m, d = map(int, latest_version.split('.'))  # 解析年、月、日
+        latest_date = datetime.date(y, m, d)
+        now_version = self.now_version.lstrip('v')
+        now_date = datetime.date(*map(int, now_version.split('.')))
+        self.need_update = (latest_date > now_date)
 
     def download_latest(self, callback=None):
         if not self.need_update:
