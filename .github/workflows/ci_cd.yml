@@ -31,7 +31,11 @@ jobs:
                     echo "Current lock version: $CURRENT"
                     
                     # 3. 比對兩者
-                    if [ "$LATEST" != "$CURRENT" ]; then
+
+                    # 轉乘數字比較日期格式的版本號，確保只有當 LATEST 較新時才更新
+                    LATEST_KEY=${LATEST//./}
+                    CURRENT_KEY=${CURRENT//./}
+                    if [ "$LATEST_KEY" -gt "$CURRENT_KEY" ]; then
                         echo "版本不同，需要更新！"
                         echo "UPDATE_NEEDED=true" >> $GITHUB_OUTPUT
                         echo "UPDATE_NEEDED=true" >> $GITHUB_ENV

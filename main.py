@@ -535,7 +535,7 @@ def main(page: ft.Page):
     # 用一個卡片包住整個上半部
     dashboard_card = ft.Container(
         content=dashboard_content,
-        bgcolor="#F1F1B0",
+        bgcolor="#fbed93",
         padding=25,
         border_radius=15,
         border=ft.Border.all(1, ft.Colors.GREY_200),
