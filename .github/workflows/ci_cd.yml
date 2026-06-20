@@ -32,10 +32,8 @@ jobs:
                     
                     # 3. 比對兩者
 
-                    # 轉乘數字比較日期格式的版本號，確保只有當 LATEST 較新時才更新
-                    LATEST_KEY=${LATEST//./}
-                    CURRENT_KEY=${CURRENT//./}
-                    if [ "$LATEST_KEY" -gt "$CURRENT_KEY" ]; then
+                    NEWEST=$(printf '%s\n' "$CURRENT" "$LATEST" | sort -V | tail -n 1)
+                    if [ "$NEWEST" = "$LATEST" ] && [ "$LATEST" != "$CURRENT" ]; then
                         echo "版本不同，需要更新！"
                         echo "UPDATE_NEEDED=true" >> $GITHUB_OUTPUT
                         echo "UPDATE_NEEDED=true" >> $GITHUB_ENV
