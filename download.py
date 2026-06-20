@@ -99,11 +99,17 @@ def download_audio(url: str, output_path: str, progress_hook):
         'format': 'bestaudio/best',
         'progress_hooks': [progress_hook],
         'noplaylist': True,
-        'postprocessors': [{
+        'writethumbnail': True,
+        'postprocessors': [ 
+        {
             'key': 'FFmpegExtractAudio',
-            'preferredcodec': 'mp3',
-            
-        }],
+            'preferredcodec': 'mp3',    
+        },
+        {
+            'key': 'EmbedThumbnail',
+        }
+
+        ],
         'js_runtimes': {'node':{},'deno':{}},
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl: # type: ignore
